@@ -114,27 +114,12 @@ export default async function GalleryPage({ params }: GalleryProps) {
                       Simpan
                     </a>
                   </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-      </div>
-
-      {/* Floating Bottom Bar for ZIP Download */}
-      <div className="fixed bottom-0 left-0 right-0 p-4" style={{ background: "linear-gradient(to top, rgba(30,20,15,0.95) 0%, rgba(30,20,15,0) 100%)" }}>
-        <div className="max-w-lg mx-auto">
-          <a 
-            href={`/api/download/${sessionId}?dir=${encodeURIComponent(dir)}`}
-            className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl text-center font-sans text-sm font-bold shadow-2xl transition-all active:scale-[0.98]"
-            style={{ background: "#e6e0d4", color: "#2a1b12" }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-            </svg>
-            Download Semua (ZIP)
-          </a>
-        </div>
       </div>
     </div>
   );
