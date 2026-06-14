@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { dataUrlToBuffer, getExtensionFromDataUrl } from "@/lib/sessionManager";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+// We create a special admin client here using the service_role key to bypass RLS policies
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://glgtlskuaazjarqtomhr.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,10 +73,10 @@ export async function POST(req: NextRequest) {
       const filename = `${sessionId}/originals/photo_${String(i + 1).padStart(2, "0")}.${ext}`;
       const buf = dataUrlToBuffer(photoDataUrl);
       uploadPromises.push(
-        supabase.storage.from("sessions").upload(filename, buf, {
+        supabaseAdmin.storage.from("sessions").upload(filename, buf, {
           contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
           upsert: true,
-        })
+        }).then(res => { if (res.error) console.error("Upload Error:", res.error) })
       );
     });
 
@@ -79,10 +85,10 @@ export async function POST(req: NextRequest) {
       const ext = getExtensionFromDataUrl(framedPhoto);
       const buf = dataUrlToBuffer(framedPhoto);
       uploadPromises.push(
-        supabase.storage.from("sessions").upload(`${sessionId}/framed.${ext}`, buf, {
+        supabaseAdmin.storage.from("sessions").upload(`${sessionId}/framed.${ext}`, buf, {
           contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
           upsert: true,
-        })
+        }).then(res => { if (res.error) console.error("Upload Error:", res.error) })
       );
     }
 
@@ -90,10 +96,10 @@ export async function POST(req: NextRequest) {
     if (gif) {
       const buf = dataUrlToBuffer(gif);
       uploadPromises.push(
-        supabase.storage.from("sessions").upload(`${sessionId}/animation.gif`, buf, {
+        supabaseAdmin.storage.from("sessions").upload(`${sessionId}/animation.gif`, buf, {
           contentType: "image/gif",
           upsert: true,
-        })
+        }).then(res => { if (res.error) console.error("Upload Error:", res.error) })
       );
     }
 

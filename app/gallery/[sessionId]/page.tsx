@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 // This tells Next.js not to statically generate this page at build time
 export const dynamic = "force-dynamic";
@@ -10,8 +10,15 @@ interface GalleryProps {
 export default async function GalleryPage({ params }: GalleryProps) {
   const { sessionId } = await params;
 
-  const { data: rootFiles, error: rootError } = await supabase.storage.from("sessions").list(sessionId);
-  const { data: originalFiles } = await supabase.storage.from("sessions").list(`${sessionId}/originals`);
+  // We must use the service role key because Supabase RLS blocks the list() API for anon users,
+  // even if the bucket is set to Public (Public only allows getPublicUrl).
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://glgtlskuaazjarqtomhr.supabase.co",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+  );
+
+  const { data: rootFiles, error: rootError } = await supabaseAdmin.storage.from("sessions").list(sessionId);
+  const { data: originalFiles } = await supabaseAdmin.storage.from("sessions").list(`${sessionId}/originals`);
 
   if (rootError || !rootFiles || rootFiles.length === 0) {
     return (
@@ -28,11 +35,11 @@ export default async function GalleryPage({ params }: GalleryProps) {
   const animatedGif = rootFiles.find(f => f.name.endsWith(".gif"));
 
   const getImageUrl = (file: string) => {
-    return supabase.storage.from("sessions").getPublicUrl(`${sessionId}/${file}`).data.publicUrl;
+    return supabaseAdmin.storage.from("sessions").getPublicUrl(`${sessionId}/${file}`).data.publicUrl;
   };
   
   const getOriginalUrl = (file: string) => {
-    return supabase.storage.from("sessions").getPublicUrl(`${sessionId}/originals/${file}`).data.publicUrl;
+    return supabaseAdmin.storage.from("sessions").getPublicUrl(`${sessionId}/originals/${file}`).data.publicUrl;
   };
 
   return (
